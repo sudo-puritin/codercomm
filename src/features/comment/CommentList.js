@@ -9,7 +9,6 @@ import LoadingScreen from "../../components/LoadingScreen";
 import { Pagination, Stack, Typography } from "@mui/material";
 
 function CommentList({ postId }) {
-  console.log("🚀 Puritin ~ CommentList ~ postId:", postId);
   const {
     commentsByPost,
     commentsById,
@@ -27,33 +26,27 @@ function CommentList({ postId }) {
     shallowEqual
   );
 
-  console.log("🚀 Puritin ~ CommentList ~ commentsByPost:", commentsByPost);
   const totalPages = Math.ceil(totalComments / COMMENT_PER_POST);
 
   const dispatch = useDispatch();
 
   let renderComments;
 
+  if (commentsByPost) {
+    const comments = commentsByPost.map((commentId) => commentsById[commentId]);
+    renderComments = (
+      <Stack spacing={1.5}>
+        {comments.map((comment) => (
+          <CommentCard key={comment._id} comment={comment} />
+        ))}
+      </Stack>
+    );
+  } else if (isLoading) {
+    renderComments = <LoadingScreen />;
+  }
+
   useEffect(() => {
     if (postId) dispatch(getComments({ postId }));
-
-    console.log("🚀 Puritin ~ useEffect ~ commentsByPost:", commentsByPost);
-
-    if (commentsByPost) {
-      const comments = commentsByPost.map(
-        (commentId) => commentsById[commentId]
-      );
-      console.log("🚀 Puritin ~ useEffect ~ comments:", comments);
-      renderComments = (
-        <Stack spacing={1.5}>
-          {comments.map((comment) => (
-            <CommentCard key={comment._id} comment={comment} />
-          ))}
-        </Stack>
-      );
-    } else if (isLoading) {
-      renderComments = <LoadingScreen />;
-    }
   }, [postId, dispatch]);
 
   return (

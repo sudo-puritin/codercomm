@@ -27,25 +27,25 @@ const slice = createSlice({
       state.error = null;
     },
     getCommentSuccess(state, action) {
-      const newState = { ...state.commentsByPost };
-      console.log("commentByPost", newState);
       state.isLoading = false;
       state.error = null;
       const { postId, comments, count, page } = action.payload;
 
-      console.log("🚀 Puritin ~ getCommentSuccess ~ postId:", postId);
-
       comments.forEach(
         (comment) => (state.commentsById[comment._id] = comment)
       );
-
-      console.log("🚀 Puritin ~ getCommentSuccess ~ comments:", comments);
 
       state.commentsByPost[postId] = comments
         .map((comment) => comment._id)
         .reverse();
       state.totalCommentsByPost[postId] = count;
       state.currentPageByPost[postId] = page;
+    },
+    sendCommentReactionSuccess(state, action) {
+      state.isLoading = false;
+      state.error = null;
+      const { commentId, reactions } = action.payload;
+      state.commentsById[commentId].reactions = reactions;
     },
   },
 });
@@ -62,6 +62,7 @@ export const createComment =
         postId,
       });
       dispatch(slice.actions.createCommentSuccess(response.data));
+      dispatch(getComments({ postId }));
     } catch (error) {
       dispatch(slice.actions.hasError(error.message));
     }
@@ -81,6 +82,27 @@ export const getComments =
       });
       dispatch(
         slice.actions.getCommentSuccess({ ...response.data, postId, page })
+      );
+    } catch (error) {
+      dispatch(slice.actions.hasError(error.message));
+    }
+  };
+
+export const sendCommentReaction =
+  ({ commentId, emoji }) =>
+  async (dispatch) => {
+    dispatch(slice.actions.startLoading());
+    try {
+      const response = await apiService.post(`/reactions`, {
+        targetType: "Comment",
+        targetId: commentId,
+        emoji,
+      });
+      dispatch(
+        slice.actions.sendCommentReactionSuccess({
+          commentId,
+          reactions: response.data,
+        })
       );
     } catch (error) {
       dispatch(slice.actions.hasError(error.message));
